@@ -30,8 +30,8 @@ p22lis <- list.files("Z:/Late_blight/MRCfieldtest/mrcfield2022_psscene_analytic_
 # GRVI (GREEN - RED) / (GREEN + RED)
 'grvi <- ([4] - [6]) / ([4] + [6])'
 
-# canopy chlorophyll content index CCCI. described N content  ((NIR - RE) / (NIR + RE) ) / ((NIR - red) / (NIR + red))
-'ccci <- ( ([7]-[6]) / ([7]+[6])) / (([8] - [6]) / ([8] + [6]))'
+# canopy chlorophyll content index CCCI. described N content  ((NIR - RE) / min(NIR + RE) ) / ( max(NIR - red) / min(NIR + red))
+'ccci <- ( ([7]-[6]) / min([7]+[6])) / ( max([8] - [6]) / min([8] + [6]))'
 
 # enhanced vegetation index is for high biomass. not crops... NO EVI
 # evi <- 2.4 * ( ([[8]] - [[6]]) / ([[8]] + [[6]] + 1)  ) 
@@ -47,14 +47,34 @@ creatIdx <- function(x){
   x = c(x, msavi)
   grvi = (x[[4]] - x[[6]]) / (x[[4]] + x[[6]])
   x = c(x, grvi)
-  ccci = ((x[[8]] - x[[7]]) / (x[[7]] + x[[8]])) / ((x[[8]] - x[[6]]) / (x[[8]] + x[[6]] ))
-  x = c(x, ccci)
   cci2 = ((x[[3]] - x[[6]]) / (x[[3]] + x[[6]]))
   x = c(x, cci2)
   names(x)[c(9, 10, 11, 12, 13, 14, 15)] <- c("NDVI", "NDRE", "EVI", "MSAVI", "GRVI",
                                                   "CCCI", "CCI")
   return(x)
 }
+
+# This is run after creatIdx. Need the values of min. and max. NDRE created in creatIdx
+cccif <- function(x){
+  # Put the index of the layer for ndre in the space between "[[ ]]"
+  ndre_ly = x[[ ]]
+  ndre_empt = ndre_ly
+  # For names
+  xnam = names(x)
+  # Set up inputs for formula
+  ndre_min_val = min(ndre_ly, na.rm=T)
+  ndre_max_val = max(ndre_ly, na.rm=T)
+  ndre_min = ndre_empt
+  ndre_min[!is.na(ndre_min)] = ndre_min_val
+  ndre_max = ndre_empt
+  ndre_max[!is.na(ndre_max)] = ndre_max_val
+  
+  ccci = ((ndre_ly - ndre_min ) / (ndre_max + ndre_min))
+  
+  # Combine the existing layers with the new CCCI layer
+  x = c(x, ccci)
+  # Fix the names for the new set of layers
+  names(x) = c(xnam, "CCCI")
 
 # For loop to read in one raster at a time, calculate the vegetation index, and append the index to the raster.
 # Use creatIdx with all of 2022
@@ -76,3 +96,6 @@ for(i in 1:length(p22lis)){
               nm1,".tif"), overwrite=T, wopt=list(datatype="FLT8S"))
 }
 
+# Use similar for loop as line 81, but replace "creatIdx" with "cccif" on 83. Probably will have to create a new list of raster files,
+# similar to p22lis, that reflects the new name "planet_plusVI_REV_[date]"
+  
