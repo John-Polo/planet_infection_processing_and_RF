@@ -62,8 +62,8 @@ cccif <- function(x){
   # For names
   xnam = names(x)
   # Set up inputs for formula
-  ndre_min_val = min(ndre_ly, na.rm=T)
-  ndre_max_val = max(ndre_ly, na.rm=T)
+  ndre_min_val = global(ndre_ly, fun="min", na.rm=T)
+  ndre_max_val = global(ndre_ly, fun="max", na.rm=T)
   ndre_min = ndre_empt
   ndre_min[!is.na(ndre_min)] = ndre_min_val
   ndre_max = ndre_empt
